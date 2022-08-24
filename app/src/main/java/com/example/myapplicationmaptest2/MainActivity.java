@@ -48,12 +48,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private int num_page = 10;
     private CircleIndicator3 mIndicator;
     private Handler handler;
+    private Boolean isInitial;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        isInitial = true;
         handler = new Handler();
 
         // get data
@@ -78,18 +80,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 // Set the map coordinates
                 StoreInfoHandler storeInfoHandler = StoreInfoHandler.getInstance();
                 StoreInfo storeInfo = storeInfoHandler.getStore_list().get(0);
-                LatLng loc = new LatLng(storeInfo.latitude, storeInfo.longitude);
-                // Set the map type to Hybrid.
+                moveMap(storeInfo);
                 googleMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
-                // Add a marker on the map coordinates.
-                googleMap.addMarker(new MarkerOptions()
-                        .position(loc)
-                        .title(storeInfo.storeName)
-                        .snippet(storeInfo.address + " : "+storeInfo.star_of_cleanliness)).showInfoWindow();
-                // Move the camera to the map coordinates and zoom in closer.
-                googleMap.moveCamera(CameraUpdateFactory.newLatLng(loc));
-                googleMap.moveCamera(CameraUpdateFactory.zoomTo(19));
-                // Display traffic.
                 googleMap.setTrafficEnabled(false);
                 googleMap.setBuildingsEnabled(true);
             }
@@ -110,7 +102,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         //ViewPager Setting
         mPager.setOrientation(ViewPager2.ORIENTATION_HORIZONTAL);
 
-        mPager.setCurrentItem(0); //시작 지점
+        mPager.setCurrentItem(1); //시작 지점
         mPager.setOffscreenPageLimit(StoreInfoHandler.getInstance().getStore_list().size()); //최대 이미지 수
 
         mPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
@@ -133,10 +125,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 super.onPageSelected(position);
                 mIndicator.animatePageSelected(position%num_page);
                 Log.d("호준", String.format("onPageSelected: %d", position));
-                if(position != 0){
+                if(isInitial != true){
                     moveMap(StoreInfoHandler.getInstance().getStore_list().get(position));
                 }
-
+                isInitial = false;
             }
         });
     }
