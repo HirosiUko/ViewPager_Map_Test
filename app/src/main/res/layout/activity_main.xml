@@ -7,6 +7,12 @@
     android:orientation="vertical"
     tools:context=".MainActivity">
 
+    <TextView
+        android:id="@+id/tv_CUR_GPS"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="TextView" />
+
     <com.google.android.gms.maps.MapView
         android:id="@+id/mMapView"
         android:layout_width="413dp"

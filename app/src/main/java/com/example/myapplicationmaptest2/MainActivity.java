@@ -4,12 +4,20 @@ import static com.google.android.gms.maps.UiSettings.*;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
+import android.Manifest;
+import android.content.Context;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.NetworkResponse;
@@ -20,6 +28,8 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.HttpHeaderParser;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
@@ -27,6 +37,7 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.UiSettings;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.tasks.OnSuccessListener;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -50,6 +61,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private Handler handler;
     private Boolean isInitial;
 
+    private TextView tv_current_gps;
+
+    private FusedLocationProviderClient fusedLocationClient;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -59,7 +74,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         handler = new Handler();
 
         // get data
-        if(StoreInfoHandler.requestQueue == null){
+        if (StoreInfoHandler.requestQueue == null) {
             // requestQueue 생성
             StoreInfoHandler.requestQueue = Volley.newRequestQueue(getApplicationContext());
         }
@@ -69,6 +84,30 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mMapView = findViewById(R.id.mMapView);
         mMapView.onCreate(savedInstanceState);
         handler.post(runable);
+
+        tv_current_gps = findViewById(R.id.tv_CUR_GPS);
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            Log.d("나당", "onCreate: 퍼미션에러");
+            return;
+        }
+        fusedLocationClient.getLastLocation()
+                .addOnSuccessListener(this, new OnSuccessListener<Location>() {
+                    @Override
+                    public void onSuccess(Location location) {
+                        // Got last known location. In some rare situations this can be null.
+                        Log.d("나당", "onSuccess: ");
+                        if (location != null) {
+                            Log.d("나당", "GPS받음" + location.getLatitude() + ":" + location.getLongitude());
+                            tv_current_gps.setText("현재 GPS : "+location.getLatitude() + ":" + location.getLongitude());
+                        }else
+                        {
+                            Log.d("나당", "GPS못받음");
+                            tv_current_gps.setText("GPS못받음");
+                        }
+                    }
+                });
     }
 
     private void initMap()
