@@ -18,7 +18,7 @@
         app:cameraTargetLat="-33.796923"
         app:cameraTargetLng="150.922433"
         app:cameraTilt="30"
-        app:cameraZoom="13"
+        app:cameraZoom="20"
         app:mapType="normal"
         app:uiCompass="true"
         app:uiRotateGestures="true"

@@ -40,12 +40,12 @@ import me.relex.circleindicator.CircleIndicator3;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
 
-    private GoogleMap mMap;
+    private static GoogleMap mMap;
     private MapView mMapView;
 
     private ViewPager2 mPager;
     private FragmentStateAdapter pagerAdapter;
-    private int num_page = 4;
+    private int num_page = 10;
     private CircleIndicator3 mIndicator;
     private Handler handler;
 
@@ -67,11 +67,37 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mMapView = findViewById(R.id.mMapView);
         mMapView.onCreate(savedInstanceState);
         handler.post(runable);
+    }
 
-        /**
-         * 가로 슬라이드 뷰 Fragment
-         */
+    private void initMap()
+    {
+        mMapView.getMapAsync(new OnMapReadyCallback() {
+            @Override
+            public void onMapReady(@NonNull GoogleMap googleMap) {
+                mMap = googleMap;
+                // Set the map coordinates
+                StoreInfoHandler storeInfoHandler = StoreInfoHandler.getInstance();
+                StoreInfo storeInfo = storeInfoHandler.getStore_list().get(0);
+                LatLng loc = new LatLng(storeInfo.latitude, storeInfo.longitude);
+                // Set the map type to Hybrid.
+                googleMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+                // Add a marker on the map coordinates.
+                googleMap.addMarker(new MarkerOptions()
+                        .position(loc)
+                        .title(storeInfo.storeName)
+                        .snippet(storeInfo.address + " : "+storeInfo.star_of_cleanliness)).showInfoWindow();
+                // Move the camera to the map coordinates and zoom in closer.
+                googleMap.moveCamera(CameraUpdateFactory.newLatLng(loc));
+                googleMap.moveCamera(CameraUpdateFactory.zoomTo(19));
+                // Display traffic.
+                googleMap.setTrafficEnabled(false);
+                googleMap.setBuildingsEnabled(true);
+            }
+        });
+    }
 
+    private void initContents()
+    {
         //ViewPager2
         mPager = findViewById(R.id.mPager);
         //Adapter
@@ -84,16 +110,16 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         //ViewPager Setting
         mPager.setOrientation(ViewPager2.ORIENTATION_HORIZONTAL);
 
-        /**
-         * 이 부분 조정하여 처음 시작하는 이미지 설정.
-         * 2000장 생성하였으니 현재위치 1002로 설정하여
-         * 좌 우로 슬라이딩 할 수 있게 함. 거의 무한대로
-         */
-
-        mPager.setCurrentItem(1000); //시작 지점
-        mPager.setOffscreenPageLimit(10); //최대 이미지 수
+        mPager.setCurrentItem(0); //시작 지점
+        mPager.setOffscreenPageLimit(StoreInfoHandler.getInstance().getStore_list().size()); //최대 이미지 수
 
         mPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+                super.onPageScrollStateChanged(state);
+            }
+
             @Override
             public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
                 super.onPageScrolled(position, positionOffset, positionOffsetPixels);
@@ -106,9 +132,27 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             public void onPageSelected(int position) {
                 super.onPageSelected(position);
                 mIndicator.animatePageSelected(position%num_page);
+                Log.d("호준", String.format("onPageSelected: %d", position));
+                if(position != 0){
+                    moveMap(StoreInfoHandler.getInstance().getStore_list().get(position));
+                }
+
             }
         });
+    }
 
+    private static void moveMap(StoreInfo storeInfo)
+    {
+        Log.d("호준", "moveMap: "+storeInfo.toString());
+        LatLng loc = new LatLng(storeInfo.latitude, storeInfo.longitude);
+        //  Add a marker on the map coordinates.
+        mMap.addMarker(new MarkerOptions()
+                .position(loc)
+                .title(storeInfo.storeName)
+                .snippet(storeInfo.address + " : "+storeInfo.star_of_cleanliness)).showInfoWindow();
+        // Move the camera to the map coordinates and zoom in closer.
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(loc));
+        mMap.moveCamera(CameraUpdateFactory.zoomTo(19));
     }
 
     private void sendRequest() {
@@ -182,20 +226,21 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onMapReady(@NonNull GoogleMap googleMap) {
         mMap = googleMap;
-        // Set the map coordinates to Kyoto Japan.
-        LatLng kyoto = new LatLng(35.00116, 135.7681);
-        // Set the map type to Hybrid.
-        googleMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
-        // Add a marker on the map coordinates.
-        googleMap.addMarker(new MarkerOptions()
-                .position(kyoto)
-                .title("Kyoto")).showInfoWindow();
-        // Move the camera to the map coordinates and zoom in closer.
-        googleMap.moveCamera(CameraUpdateFactory.newLatLng(kyoto));
-        googleMap.moveCamera(CameraUpdateFactory.zoomTo(15));
-        // Display traffic.
-        googleMap.setTrafficEnabled(false);
-        googleMap.setBuildingsEnabled(true);
+//        // Set the map coordinates to Kyoto Japan.
+//        LatLng kyoto = new LatLng(35.00116, 135.7681);
+//        // Set the map type to Hybrid.
+//        googleMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+//        // Add a marker on the map coordinates.
+//        googleMap.addMarker(new MarkerOptions()
+//                .position(kyoto)
+//                .title("Kyoto")).showInfoWindow();
+//        // Move the camera to the map coordinates and zoom in closer.
+//        googleMap.moveCamera(CameraUpdateFactory.newLatLng(kyoto));
+//        googleMap.moveCamera(CameraUpdateFactory.zoomTo(15));
+//        // Display traffic.
+//        googleMap.setTrafficEnabled(false);
+//        googleMap.setBuildingsEnabled(true);
+//        mMapView.setCameraDistance(1.5F);
     }
 
     public Runnable runable = new Runnable() {
@@ -203,28 +248,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         public void run() {
             StoreInfoHandler storeInfoHandler = StoreInfoHandler.getInstance();
             if(storeInfoHandler.getCurrent_state() == StoreInfoHandler.State.NORMAL){
-                mMapView.getMapAsync(new OnMapReadyCallback() {
-                    @Override
-                    public void onMapReady(@NonNull GoogleMap googleMap) {
-                        mMap = googleMap;
-                        // Set the map coordinates
-                        StoreInfo storeInfo = storeInfoHandler.getStore_list().get(0);
-                        LatLng kyoto = new LatLng(storeInfo.latitude, storeInfo.longitude);
-                        // Set the map type to Hybrid.
-                        googleMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
-                        // Add a marker on the map coordinates.
-                        googleMap.addMarker(new MarkerOptions()
-                                .position(kyoto)
-                                .title(storeInfo.storeName)
-                                .snippet(storeInfo.address + " : "+storeInfo.star_of_cleanliness)).showInfoWindow();
-                        // Move the camera to the map coordinates and zoom in closer.
-                        googleMap.moveCamera(CameraUpdateFactory.newLatLng(kyoto));
-                        googleMap.moveCamera(CameraUpdateFactory.zoomTo(15));
-                        // Display traffic.
-                        googleMap.setTrafficEnabled(false);
-                        googleMap.setBuildingsEnabled(true);
-                    }
-                });
+                initMap();
+                initContents();
             }else{
                 handler.postDelayed(this, 500);
             }

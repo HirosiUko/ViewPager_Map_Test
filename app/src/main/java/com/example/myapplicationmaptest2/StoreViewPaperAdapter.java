@@ -1,5 +1,7 @@
 package com.example.myapplicationmaptest2;
 
+import android.util.Log;
+
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
@@ -15,7 +17,12 @@ public class StoreViewPaperAdapter extends FragmentStateAdapter {
     @NonNull
     @Override
     public Fragment createFragment(int position) {
-        return new StoreFragment();
+        Log.d("호준", String.format("createFragment: %d", position));
+        StoreInfoHandler storeInfoHandler = StoreInfoHandler.getInstance();
+        StoreInfo store = storeInfoHandler.getStore_list().get(position);
+        StoreFragment storeFragment = new StoreFragment();
+        storeFragment.setContent(store.toString());
+        return storeFragment;
     }
 
     @Override
