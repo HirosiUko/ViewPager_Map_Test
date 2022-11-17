@@ -29,7 +29,9 @@ import com.android.volley.toolbox.HttpHeaderParser;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
@@ -37,7 +39,9 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.UiSettings;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.tasks.CancellationToken;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.OnTokenCanceledListener;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -92,6 +96,20 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             Log.d("나당", "onCreate: 퍼미션에러");
             return;
         }
+
+        fusedLocationClient.getCurrentLocation(LocationRequest.PRIORITY_HIGH_ACCURACY, new CancellationToken() {
+            @NonNull
+            @Override
+            public CancellationToken onCanceledRequested(@NonNull OnTokenCanceledListener onTokenCanceledListener) {
+                return null;
+            }
+
+            @Override
+            public boolean isCancellationRequested() {
+                return false;
+            }
+        });
+
         fusedLocationClient.getLastLocation()
                 .addOnSuccessListener(this, new OnSuccessListener<Location>() {
                     @Override
@@ -182,8 +200,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 .title(storeInfo.storeName)
                 .snippet(storeInfo.address + " : "+storeInfo.star_of_cleanliness)).showInfoWindow();
         // Move the camera to the map coordinates and zoom in closer.
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(loc));
-        mMap.moveCamera(CameraUpdateFactory.zoomTo(19));
+//        mMap.moveCamera(CameraUpdateFactory.newLatLng(loc));
+//        mMap.moveCamera(CameraUpdateFactory.zoomTo(19));
+        CameraUpdate location = CameraUpdateFactory.newLatLngZoom(
+                loc, 19);
+        mMap.animateCamera(location);
     }
 
     private void sendRequest() {
